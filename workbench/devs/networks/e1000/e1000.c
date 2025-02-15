@@ -627,7 +627,7 @@ int request_irq(struct net_device *unit)
 {
     D(bug("[%s]: %s()\n", unit->e1ku_name, __func__);)
 
-    AddIntServer(INTB_KERNEL | unit->e1ku_IRQ, &unit->e1ku_irqhandler);
+    AddIntServer(INTB_KERNEL + unit->e1ku_IRQ, &unit->e1ku_irqhandler);
     AddIntServer(INTB_VERTB, &unit->e1ku_touthandler);
 
     D(bug("[%s] %s: IRQ Handlers configured\n", unit->e1ku_name, __func__);)
@@ -638,7 +638,7 @@ int request_irq(struct net_device *unit)
 #if 0
 static void free_irq(struct net_device *unit)
 {
-    RemIntServer(INTB_KERNEL | unit->e1ku_IRQ, unit->e1ku_irqhandler);
+    RemIntServer(INTB_KERNEL + unit->e1ku_IRQ, unit->e1ku_irqhandler);
     RemIntServer(INTB_VERTB, unit->e1ku_touthandler);
 }
 #endif
@@ -990,14 +990,12 @@ void e1000func_alloc_rx_buffers(struct net_device *unit,
 
         if ((buffer_info->buffer = AllocMem(unit->rx_buffer_len, MEMF_PUBLIC|MEMF_CLEAR)) != NULL)
         {
-            D(
-                bug("[%s] %s: Buffer %d Allocated @ %p [%d bytes]\n", unit->e1ku_name, __func__, i, buffer_info->buffer, unit->rx_buffer_len);
-                if ((buffer_info->dma = HIDD_PCIDriver_CPUtoPCI(unit->e1ku_PCIDriver, (APTR)buffer_info->buffer)) == NULL)
-                {
-                    bug("[%s] %s: Failed to Map Buffer %d for DMA!!\n", unit->e1ku_name, __func__, i);
-                }
-                bug("[%s] %s: Buffer %d DMA @ %p\n", unit->e1ku_name, __func__, i, buffer_info->dma);
-            )
+            D(bug("[%s] %s: Buffer %d Allocated @ %p [%d bytes]\n", unit->e1ku_name, __func__, i, buffer_info->buffer, unit->rx_buffer_len));
+            if ((buffer_info->dma = HIDD_PCIDriver_CPUtoPCI(unit->e1ku_PCIDriver, (APTR)buffer_info->buffer)) == NULL)
+            {
+                D(bug("[%s] %s: Failed to Map Buffer %d for DMA!!\n", unit->e1ku_name, __func__, i));
+            }
+            D(bug("[%s] %s: Buffer %d DMA @ %p\n", unit->e1ku_name, __func__, i, buffer_info->dma));
 
             rx_desc = E1000_RX_DESC(rx_ring, i);
             rx_desc->buffer_addr = AROS_QUAD2LE((IPTR)buffer_info->dma);
